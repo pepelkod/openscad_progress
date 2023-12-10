@@ -335,6 +335,10 @@ struct CommandLine
 };
 
 int do_export(const CommandLine& cmd, const RenderVariables& render_variables, FileFormat curFormat, SourceFile *root_file);
+void cmdline_report_func(const std::shared_ptr<const AbstractNode>&, void *vp, int mark)
+{
+	printf("report update mark %d progress report count %d\n", mark, progress_report_count);
+}
 
 int cmdline(const CommandLine& cmd)
 {
@@ -515,7 +519,7 @@ int do_export(const CommandLine& cmd, const RenderVariables& render_variables, F
   fs::current_path(cmd.original_path);
 
   // Do we have an explicit root node (! modifier)?
-  std::shared_ptr<const AbstractNode> root_node;
+  std::shared_ptr<AbstractNode> root_node;
   const Location *nextLocation = nullptr;
   if (!(root_node = find_root_tag(absolute_root_node, &nextLocation))) {
     root_node = absolute_root_node;
@@ -524,6 +528,9 @@ int do_export(const CommandLine& cmd, const RenderVariables& render_variables, F
     LOG(message_group::Warning, *nextLocation, builtin_context->documentRoot(), "More than one Root Modifier (!)");
   }
   Tree tree(root_node, fparent.string());
+
+  // douglas added this
+  progress_report_prep(root_node, cmdline_report_func, NULL);
 
   if (curFormat == FileFormat::CSG) {
     // https://github.com/openscad/openscad/issues/128
